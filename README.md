@@ -1,28 +1,96 @@
-# E-Commerce Database
+# Data Architecture Overview
 
-## About the Project
-This project simulates the complete data lifecycle within an e-commerce system. The architecture is divided into two main phases:
-1. Building a normalized operational database (OLTP) to manage and process daily transaction activities.
-2. Designing a Data Warehouse using a Star Schema and building an automated ETL pipeline to serve Business Intelligence (BI) and analytical purposes.
+This project simulates the data architecture of a typical e-commerce analytics system.
 
-## Implementation Process
-1. **Building the Operational Database (OLTP):**
-- Data Modeling: Designed the QLGD database with a robust Entity-Relationship Diagram (ERD), consisting of 4 main tables: NGUOIDUNG (Users), HANGHOA (Products), GIAODICH (Transactions), and CHITIETGD (Transaction Details).
-- Query Optimization (T-SQL): * Authored complex JOIN queries to identify the top 5 sellers with the highest annual revenue.
-  - Developed a Stored Procedure incorporating conditional logic (IF NOT EXISTS) to calculate and retrieve the total revenue for specific products.
-  - Created a User-Defined Function (UDF) to filter and return a list of customers based on a specific total transaction value threshold.
-  
-  <img width="1206" height="492" alt="Screenshot 2026-03-06 004429" src="https://github.com/user-attachments/assets/4ea46044-b4ce-484d-9214-ab1281c1233c" />
+The system follows a modern data pipeline:
 
-2. **Building the Data Warehouse & ETL Pipeline:**
-- Dimensional Modeling (Star Schema): Constructed a dedicated SALES database for analytics, featuring a central fact table (FactTransaction) and supporting dimension tables (DimDate, DimBuyer).
-  
-<img width="779" height="191" alt="Screenshot 2026-03-06 004506" src="https://github.com/user-attachments/assets/2d7410bd-7892-49dc-a747-6b9649cd347f" />
+Operational Database (OLTP) → ETL Pipeline → Data Warehouse → Business Intelligence
 
-- ETL Pipeline Development with SSIS:
-  - Extract: Extracted raw data from heterogeneous sources, including CSV files (Flat File Source) and SQL databases (OLE DB Source).
-  - Transform: Applied advanced SSIS transformations such as Data Conversion, Derived Column (extracting date/time attributes), and Conditional Split (segmenting users into buyers/sellers).
-  - Load & SCD: Loaded transformed data into the Data Warehouse utilizing the Slowly Changing Dimension (SCD) component. Configured TransactionID as the Business Key to automatically track and manage historical data changes.
-    
-<img width="815" height="393" alt="Screenshot 2026-03-06 004538" src="https://github.com/user-attachments/assets/0e67abc7-d006-4e7d-920c-e55312a54d2a" />
+1. **OLTP Layer**
+   - Handles real-time transactional data
+   - Optimized for inserts, updates, and operational queries
 
+2. **ETL Layer**
+   - Extracts data from operational sources
+   - Cleans and transforms data
+   - Loads structured data into the analytical warehouse
+
+3. **Data Warehouse Layer**
+   - Uses dimensional modeling (Star Schema)
+   - Optimized for analytical queries and reporting
+
+4. **Business Intelligence Layer**
+   - Enables dashboards and business analytics tools (e.g., Power BI)
+
+This architecture separates operational workloads from analytical workloads, improving both system performance and analytical efficiency.
+
+---
+
+# Data Pipeline Flow
+
+The end-to-end pipeline implemented in this project follows these steps:
+
+1. Transaction data is generated and stored in the **OLTP database**.
+2. SSIS extracts the transactional data from SQL Server and CSV files.
+3. Data is transformed using multiple SSIS components:
+   - Data Conversion
+   - Derived Column
+   - Conditional Split
+4. Processed data is loaded into the **Data Warehouse** using a Star Schema.
+5. The warehouse can then be connected to **BI tools for reporting and analytics**.
+
+This pipeline demonstrates how raw transactional data can be converted into structured analytical datasets.
+
+---
+
+# Business Analytics Use Cases
+
+The Data Warehouse enables several analytical use cases for an e-commerce platform.
+
+### Revenue Analysis
+
+Business analysts can analyze:
+
+- Total revenue by product
+- Revenue trends over time
+- Top-performing sellers
+
+### Customer Behavior Analysis
+
+The warehouse can support analysis such as:
+
+- Buyer purchase frequency
+- High-value customers
+- Customer transaction patterns
+
+### Sales Performance Monitoring
+
+Using the fact table and date dimension, analysts can easily generate reports such as:
+
+- Monthly sales trends
+- Daily transaction volume
+- Product performance metrics
+
+These insights help organizations make **data-driven business decisions**.
+
+---
+
+# Example Analytical Queries
+
+The Data Warehouse enables efficient analytical queries such as:
+
+- Total revenue per product
+- Monthly sales trends
+- Top customers by purchase value
+
+Example query:
+
+```sql
+SELECT 
+    d.YearOfTransaction,
+    SUM(f.Quantity) AS TotalSales
+FROM FactTransaction f
+JOIN DimDate d
+ON f.TransactionDate = d.TransactionDate
+GROUP BY d.YearOfTransaction
+ORDER BY d.YearOfTransaction;
